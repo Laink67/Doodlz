@@ -1,6 +1,10 @@
 package ru.laink.doodlz;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -152,5 +156,54 @@ public class MainActivityFragment extends Fragment {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    // Запрашивает разрешение, если нужно, и сохраняет изображение
+    private void saveImage() {
+        // Проверка разрешения
+        if (getContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // Окно для объяснения необходимости разрешения
+            if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+                // Назначить сообщение AlertDialog
+                builder.setMessage(R.string.permission_explanation);
+
+                // Добавить ОК
+                builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Запросить разрешение
+                        requestPermissions(new String[]{
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE}, SAVE_IMAGE_PERMISSION_REQUEST_CODE);
+                    }
+                });
+
+                // Отображение диалогового окна
+                builder.create().show();
+            } else {
+                // Запросить разрешение
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, SAVE_IMAGE_PERMISSION_REQUEST_CODE);
+            }
+        } else {
+            // Сохранить изображение
+            doodleView.saveImage();
+        }
+    }
+
+    // Вызывается, когда пользователь предоставляет или отклоняет разрешение для созранения изображения
+    private void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            doodleView.saveImage();
+    }
+
+    // Возвращает объект DoodleView
+    public DoodleView getDoodleView() {
+        return doodleView;
+    }
+
+    // Проверяет отображается ли диалоговое окно
+    public void setDialogOnScreen(boolean visible){
+        dialogOnScreen = visible;
     }
 }
